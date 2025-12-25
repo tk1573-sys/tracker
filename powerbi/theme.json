@@ -1,0 +1,7 @@
+{
+  "name": "HiTechDark_INR",
+  "dataColors": ["#00E5FF", "#7C4DFF", "#00E676", "#FFEA00", "#FF7043", "#29B6F6"],
+  "background": "#0b1220",
+  "foreground": "#e6eef8",
+  "tableAccent": "#7C4DFF"
+}

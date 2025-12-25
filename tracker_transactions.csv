@@ -1,0 +1,11 @@
+Date,Category,Amount,Type,Payment Method,Notes
+2025-01-01,Income,3000,Income,Direct Deposit,Monthly salary
+2025-01-02,Groceries,45.20,Expense,Debit Card,Weekly shop
+2025-01-03,Transport,3.50,Expense,Cash,Bus fare
+2025-01-04,Utilities,120.75,Expense,Online,Bill payment
+2025-01-05,Entertainment,12.00,Expense,Card,Movie rental
+2025-01-10,Savings,500,Transfer,Direct Debit,Savings deposit
+2025-01-15,Groceries,60.40,Expense,Debit Card,Second shop
+2025-01-20,Income,200,Income,Freelance,Side gig
+2025-01-25,Healthcare,30,Expense,Card,Pharmacy
+2025-01-28,Transport,15.00,Expense,Card,Taxi
