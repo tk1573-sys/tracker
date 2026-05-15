@@ -96,8 +96,9 @@ class InsightsEngine:
         if journal.empty or "Mood" not in journal.columns:
             return "No journal mood data available."
 
-        avg_mood = journal["Mood"].mean()
-        trend = "improving" if journal["Mood"].iloc[-1] >= journal["Mood"].iloc[0] else "declining"
+        journal_sorted = journal.sort_values("Date") if "Date" in journal.columns else journal
+        avg_mood = journal_sorted["Mood"].mean()
+        trend = "improving" if journal_sorted["Mood"].iloc[-1] >= journal_sorted["Mood"].iloc[0] else "declining"
 
         return (
             f"Average mood score: {avg_mood:.1f}/5. "
