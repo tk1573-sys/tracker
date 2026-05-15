@@ -1,0 +1,36 @@
+expense_categories:
+  - Groceries
+  - Transport
+  - Utilities
+  - Entertainment
+  - Healthcare
+  - Savings
+  - Dining
+  - Shopping
+  - Education
+  - Other
+
+income_categories:
+  - Salary
+  - Freelance
+  - Investment
+  - Side Income
+  - Gift
+  - Other
+
+habit_list:
+  - Exercise
+  - Read
+  - Meditate
+  - Journaling
+  - Healthy Eating
+  - Water Intake
+  - Sleep 8hrs
+
+health_metrics:
+  - Weight
+  - Sleep
+  - Steps
+  - Water
+  - Calories
+  - Mood

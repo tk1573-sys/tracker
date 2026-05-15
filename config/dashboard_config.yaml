@@ -1,0 +1,36 @@
+excel:
+  theme: "dark"
+  colors:
+    bg_dark: "#0b1220"
+    bg_medium: "#0f1720"
+    accent1: "#00E5FF"
+    accent2: "#7C4DFF"
+    accent3: "#00E676"
+    accent4: "#FFEA00"
+    warning: "#FF7043"
+    text_light: "#e6eef8"
+    text_muted: "#cbd5e1"
+    white: "#ffffff"
+  sheets:
+    - Dashboard
+    - Transactions
+    - Budget
+    - Habits
+    - Health
+    - Food Tracker
+    - Resolutions
+    - Journal
+    - Analytics
+    - Monthly Summary
+    - Category Analysis
+
+powerbi:
+  theme_file: "dashboards/powerbi/theme.json"
+  pages:
+    - Executive Dashboard
+    - Finance Analytics
+    - Health Dashboard
+    - Habit Analytics
+    - Resolution Tracker
+    - Journal Insights
+    - Monthly Review

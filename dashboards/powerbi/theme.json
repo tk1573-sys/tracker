@@ -1,0 +1,24 @@
+{
+  "name": "PersonalAnalyticsDark",
+  "dataColors": [
+    "#00E5FF",
+    "#7C4DFF",
+    "#00E676",
+    "#FFEA00",
+    "#FF7043",
+    "#29B6F6",
+    "#E040FB",
+    "#69F0AE"
+  ],
+  "background": "#0b1220",
+  "foreground": "#e6eef8",
+  "tableAccent": "#7C4DFF",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{"color": {"solid": {"color": "#0f1720"}}}],
+        "border": [{"show": false}]
+      }
+    }
+  }
+}

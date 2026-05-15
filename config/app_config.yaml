@@ -1,0 +1,18 @@
+app:
+  name: "Personal Analytics Platform"
+  version: "2.0.0"
+  author: ""
+  currency: "INR"
+  currency_symbol: "₹"
+  date_format: "%Y-%m-%d"
+  log_level: "INFO"
+  log_file: "logs/app.log"
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  exports_dir: "data/exports"
+
+output:
+  excel_file: "dashboards/excel/tracker_dashboard.xlsx"
+  excel_theme: "dark"
