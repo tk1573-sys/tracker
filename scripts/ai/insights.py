@@ -76,10 +76,23 @@ class InsightsEngine:
             return "No habit data available."
 
         stats = completion_rate(habits)
-        best = stats.loc[stats["Completion_Pct"].idxmax(), "Habit"] if not stats.empty else "N/A"
-        worst = stats.loc[stats["Completion_Pct"].idxmin(), "Habit"] if not stats.empty else "N/A"
-        avg = stats["Completion_Pct"].mean()
+        avg = stats["Completion_Pct"].mean() if not stats.empty else 0.0
 
+        max_pct = stats["Completion_Pct"].max() if not stats.empty else None
+        min_pct = stats["Completion_Pct"].min() if not stats.empty else None
+
+        if stats.empty:
+            return "No habit data available."
+
+        best = stats.loc[stats["Completion_Pct"].idxmax(), "Habit"]
+        if max_pct == min_pct:
+            # All habits have identical completion — no meaningful best/worst
+            return (
+                f"Overall habit completion: {avg:.1f}%. "
+                f"All tracked habits have equal completion rates."
+            )
+
+        worst = stats.loc[stats["Completion_Pct"].idxmin(), "Habit"]
         return (
             f"Overall habit completion: {avg:.1f}%. "
             f"Best habit: {best}. "
@@ -98,6 +111,10 @@ class InsightsEngine:
 
         journal_sorted = journal.sort_values("Date") if "Date" in journal.columns else journal
         avg_mood = journal_sorted["Mood"].mean()
+
+        if len(journal_sorted) < 2:
+            return f"Average mood score: {avg_mood:.1f}/5. Not enough entries for trend analysis."
+
         trend = "improving" if journal_sorted["Mood"].iloc[-1] >= journal_sorted["Mood"].iloc[0] else "declining"
 
         return (

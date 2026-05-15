@@ -22,3 +22,7 @@ def test_bmi_category_underweight():
 
 def test_bmi_zero_height():
     assert compute_bmi(70.0, 0.0) == 0.0
+
+
+def test_bmi_negative_height():
+    assert compute_bmi(70.0, -10.0) == 0.0

@@ -75,5 +75,5 @@ def category_spend(transactions: pd.DataFrame) -> pd.DataFrame:
         .sort_values("Amount", ascending=False)
     )
     total = df["Amount"].sum()
-    df["Pct"] = (df["Amount"] / total * 100).round(1) if total > 0 else 0
+    df["Pct"] = (df["Amount"] / total * 100).round(1) if total > 0 else 0.0
     return df

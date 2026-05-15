@@ -123,7 +123,7 @@ class TrackerWorkbookGenerator:
             }),
             "kpi_pct": wb.add_format({
                 "bold": True, "font_size": 13,
-                "num_format": "0.0\"%\"",
+                "num_format": "0.0%",
                 "font_color": c["accent3"], "bg_color": c["bg_medium"],
                 "border": 1, "border_color": c["accent1"],
                 "align": "right", "valign": "vcenter",
