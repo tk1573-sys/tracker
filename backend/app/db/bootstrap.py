@@ -2,7 +2,7 @@
 
 from app.db.base import Base
 from app.db.session import engine
-from app.models import user  # noqa: F401
+from app import models  # noqa: F401
 
 
 def create_tables() -> None:
