@@ -2,7 +2,15 @@
 
 from app.db.base import Base
 from app.db.session import engine
-from app.models import user  # noqa: F401
+from app.models import (  # noqa: F401
+    goal,
+    habit,
+    health_entry,
+    journal_entry,
+    reminder,
+    transaction,
+    user,
+)
 
 
 def create_tables() -> None:
