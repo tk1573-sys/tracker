@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date as date_type
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -9,7 +9,7 @@ class CSVBaseModel(BaseModel):
 
 
 class TransactionCSVRow(CSVBaseModel):
-    date: date = Field(alias="Date")
+    date: date_type = Field(alias="Date")
     category: str = Field(alias="Category", min_length=1)
     amount: Decimal = Field(alias="Amount")
     transaction_type: str = Field(alias="Type", min_length=1)
@@ -18,7 +18,7 @@ class TransactionCSVRow(CSVBaseModel):
 
 
 class HabitCSVRow(CSVBaseModel):
-    date: date = Field(alias="Date")
+    date: date_type = Field(alias="Date")
     habit: str = Field(alias="Habit", min_length=1)
     done: str = Field(alias="Done")
     notes: str | None = Field(alias="Notes", default=None)
@@ -34,8 +34,8 @@ class HabitCSVRow(CSVBaseModel):
 
 class ResolutionCSVRow(CSVBaseModel):
     resolution: str = Field(alias="Resolution", min_length=1)
-    start_date: date = Field(alias="StartDate")
-    target_date: date = Field(alias="TargetDate")
+    start_date: date_type = Field(alias="StartDate")
+    target_date: date_type = Field(alias="TargetDate")
     metric_target: Decimal = Field(alias="MetricTarget")
     current_value: Decimal = Field(alias="CurrentValue")
     status: str = Field(alias="Status", min_length=1)
@@ -48,7 +48,7 @@ class BudgetCSVRow(CSVBaseModel):
 
 
 class JournalCSVRow(CSVBaseModel):
-    date: date = Field(alias="Date")
+    date: date_type = Field(alias="Date")
     title: str = Field(alias="Title", min_length=1)
     entry: str = Field(alias="Entry", min_length=1)
     mood: int | None = Field(alias="Mood", default=None)
