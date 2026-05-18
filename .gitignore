@@ -17,6 +17,9 @@ logs/
 .env
 *.env
 
+# Backend local DB
+backend/*.db
+
 # OS
 .DS_Store
 Thumbs.db

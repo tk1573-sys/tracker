@@ -61,10 +61,39 @@ The generated workbook lands at `dashboards/excel/tracker_dashboard.xlsx`.
 
 ---
 
+## 🧩 Backend API Foundation (FastAPI)
+
+A production-ready backend starter now lives in `backend/` with:
+
+- FastAPI app + API v1 routes
+- Environment-based settings
+- SQLAlchemy + PostgreSQL/SQLite support
+- Alembic migrations
+- JWT auth scaffolding
+- Health check endpoint
+- Docker + docker-compose setup
+
+```bash
+cd backend
+python -m pip install -r requirements.txt
+cp .env.example .env
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+---
+
 ## 📁 Folder Structure
 
 ```
 tracker/
+├── backend/                         ← FastAPI backend foundation
+│   ├── app/
+│   ├── alembic/
+│   ├── requirements.txt
+│   ├── .env.example
+│   ├── Dockerfile
+│   └── docker-compose.yml
 ├── main.py                         ← CLI entry point
 ├── requirements.txt
 ├── config/
