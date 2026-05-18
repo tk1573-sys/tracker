@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="change-me", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_access_token_expire_minutes: int = Field(default=30, alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+
+    @model_validator(mode="after")
+    def validate_security(self) -> "Settings":
+        insecure_defaults = {"change-me", "change-me-in-production", "change-me-in-development-only"}
+        if self.app_env.lower() != "development" and self.jwt_secret_key in insecure_defaults:
+            raise ValueError("JWT_SECRET_KEY must be explicitly set to a strong secret outside development.")
+        return self
 
 
 @lru_cache
