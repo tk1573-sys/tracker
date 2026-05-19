@@ -7,7 +7,7 @@ from app.models.mode import Mode
 DEFAULT_MODES = ("personal", "work", "academic")
 
 
-def ensure_default_modes(db: Session, user_id: int) -> None:
+def ensure_default_modes(db: Session, user_id: int, *, auto_commit: bool = True) -> None:
     existing = db.scalars(select(Mode).where(Mode.user_id == user_id)).all()
     if existing:
         return
@@ -30,7 +30,8 @@ def ensure_default_modes(db: Session, user_id: int) -> None:
         for name in defaults_by_mode.get(mode.name, []):
             db.add(Category(user_id=user_id, mode_id=mode.id, name=name, type="task"))
 
-    db.commit()
+    if auto_commit:
+        db.commit()
 
 
 def list_modes(db: Session, user_id: int) -> list[Mode]:

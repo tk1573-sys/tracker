@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.task import Subtask, Task
 from app.schemas.task import TaskCreate, TaskUpdate
+from app.services.common import apply_mode_scope
 
 
 def create_task(
@@ -38,8 +39,7 @@ def create_task(
 
 def list_tasks(db: Session, user_id: int, mode_id: int | None, include_all_modes: bool) -> list[Task]:
     stmt = select(Task).where(Task.user_id == user_id).order_by(Task.created_at.desc())
-    if not include_all_modes and mode_id is not None:
-        stmt = stmt.where(Task.mode_id == mode_id)
+    stmt = apply_mode_scope(stmt, mode_column=Task.mode_id, mode_id=mode_id, include_all_modes=include_all_modes)
     return db.scalars(stmt).all()
 
 

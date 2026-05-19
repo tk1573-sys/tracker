@@ -6,9 +6,16 @@ from sqlalchemy.orm import Session
 from app.models.reminder import FollowUp, FollowUpRule, Reminder
 from app.models.task import Task
 from app.schemas.reminder import ReminderCreate
+from app.services.common import apply_mode_scope
 
 
-def create_default_follow_up_rule(db: Session, user_id: int, mode_id: int) -> FollowUpRule:
+def create_default_follow_up_rule(
+    db: Session,
+    user_id: int,
+    mode_id: int,
+    *,
+    auto_commit: bool = True,
+) -> FollowUpRule:
     existing = db.scalar(
         select(FollowUpRule).where(
             FollowUpRule.user_id == user_id,
@@ -28,8 +35,11 @@ def create_default_follow_up_rule(db: Session, user_id: int, mode_id: int) -> Fo
         active=True,
     )
     db.add(rule)
-    db.commit()
-    db.refresh(rule)
+    if auto_commit:
+        db.commit()
+        db.refresh(rule)
+    else:
+        db.flush()
     return rule
 
 
@@ -59,8 +69,7 @@ def create_reminder(
 
 def list_reminders(db: Session, user_id: int, mode_id: int | None, include_all_modes: bool) -> list[Reminder]:
     stmt = select(Reminder).where(Reminder.user_id == user_id).order_by(Reminder.remind_at.asc())
-    if not include_all_modes and mode_id is not None:
-        stmt = stmt.where(Reminder.mode_id == mode_id)
+    stmt = apply_mode_scope(stmt, mode_column=Reminder.mode_id, mode_id=mode_id, include_all_modes=include_all_modes)
     return db.scalars(stmt).all()
 
 

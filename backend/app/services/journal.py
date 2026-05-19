@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.journal_entry import JournalEntry
 from app.schemas.journal import JournalEntryCreate
+from app.services.common import apply_mode_scope
 
 
 def create_journal_entry(db: Session, user_id: int, payload: JournalEntryCreate, mode_id: int) -> JournalEntry:
@@ -24,8 +25,7 @@ def create_journal_entry(db: Session, user_id: int, payload: JournalEntryCreate,
 
 def list_journal_entries(db: Session, user_id: int, mode_id: int | None, include_all_modes: bool) -> list[JournalEntry]:
     stmt = select(JournalEntry).where(JournalEntry.user_id == user_id).order_by(JournalEntry.entry_date.desc(), JournalEntry.id.desc())
-    if not include_all_modes and mode_id is not None:
-        stmt = stmt.where(JournalEntry.mode_id == mode_id)
+    stmt = apply_mode_scope(stmt, mode_column=JournalEntry.mode_id, mode_id=mode_id, include_all_modes=include_all_modes)
     return db.scalars(stmt).all()
 
 

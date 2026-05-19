@@ -27,6 +27,8 @@ def add_reminder(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ReminderRead:
-    reminder = create_reminder(db, user_id=current_user.id, payload=payload, mode_id=active_mode_id)
-    create_default_follow_up_rule(db, user_id=current_user.id, mode_id=reminder.mode_id)
+    reminder = create_reminder(db, user_id=current_user.id, payload=payload, mode_id=active_mode_id, auto_commit=False)
+    create_default_follow_up_rule(db, user_id=current_user.id, mode_id=reminder.mode_id, auto_commit=False)
+    db.commit()
+    db.refresh(reminder)
     return reminder

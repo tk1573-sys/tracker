@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models.schedule import Schedule
 from app.schemas.schedule import ScheduleCreate
+from app.services.common import apply_mode_scope
 
 
 def create_schedule(db: Session, user_id: int, payload: ScheduleCreate, mode_id: int) -> Schedule:
@@ -22,6 +23,5 @@ def create_schedule(db: Session, user_id: int, payload: ScheduleCreate, mode_id:
 
 def list_schedules(db: Session, user_id: int, mode_id: int | None, include_all_modes: bool) -> list[Schedule]:
     stmt = select(Schedule).where(Schedule.user_id == user_id).order_by(Schedule.start_at.asc())
-    if not include_all_modes and mode_id is not None:
-        stmt = stmt.where(Schedule.mode_id == mode_id)
+    stmt = apply_mode_scope(stmt, mode_column=Schedule.mode_id, mode_id=mode_id, include_all_modes=include_all_modes)
     return db.scalars(stmt).all()

@@ -16,8 +16,13 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
 
 def create_user(db: Session, payload: UserCreate) -> User:
     user = User(email=payload.email, hashed_password=get_password_hash(payload.password))
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    ensure_default_modes(db, user.id)
-    return user
+    try:
+        db.add(user)
+        db.flush()
+        ensure_default_modes(db, user.id, auto_commit=False)
+        db.commit()
+        db.refresh(user)
+        return user
+    except Exception:
+        db.rollback()
+        raise
