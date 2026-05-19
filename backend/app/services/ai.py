@@ -34,10 +34,11 @@ class RuleBasedAIProvider(AIProviderAdapter):
         lowered = normalized.lower()
         if lowered.startswith("remind me "):
             remainder = normalized[10:].strip()
-            marker = re.search(r"\s+to\s+", remainder, flags=re.IGNORECASE)
-            if marker:
-                when_text = remainder[: marker.start()].strip()
-                title = remainder[marker.end():].strip().rstrip(".")
+            lower_remainder = remainder.lower()
+            marker_index = lower_remainder.find(" to ")
+            if marker_index >= 0:
+                when_text = remainder[:marker_index].strip()
+                title = remainder[marker_index + 4 :].strip().rstrip(".")
             else:
                 when_text = ""
                 title = ""
