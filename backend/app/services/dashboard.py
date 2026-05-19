@@ -83,19 +83,22 @@ def get_dashboard(db: Session, user_id: int, mode_id: int) -> DashboardResponse:
         )
     ) or 0
 
+    completed_dates = db.scalars(
+        select(func.date(Task.completed_at))
+        .where(
+            Task.user_id == user_id,
+            Task.mode_id == mode_id,
+            Task.status == "completed",
+            Task.completed_at.is_not(None),
+        )
+        .group_by(func.date(Task.completed_at))
+        .order_by(func.date(Task.completed_at).desc())
+    ).all()
+
     streak_days = 0
     day_cursor = today
-    while True:
-        has_completed = db.scalar(
-            select(func.count(Task.id)).where(
-                Task.user_id == user_id,
-                Task.mode_id == mode_id,
-                Task.status == "completed",
-                Task.completed_at.is_not(None),
-                func.date(Task.completed_at) == day_cursor,
-            )
-        )
-        if not has_completed:
+    for completed_day in completed_dates:
+        if str(completed_day) != day_cursor.isoformat():
             break
         streak_days += 1
         day_cursor = day_cursor.fromordinal(day_cursor.toordinal() - 1)

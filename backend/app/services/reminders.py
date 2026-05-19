@@ -117,7 +117,7 @@ def process_follow_ups(db: Session, now: datetime | None = None) -> int:
         if retry_count >= rule.max_retries:
             continue
 
-        backoff_minutes = rule.delay_minutes * max(1, retry_count + 1)
+        backoff_minutes = rule.delay_minutes * (2 ** retry_count)
         follow_up = FollowUp(
             task_id=task.id,
             scheduled_at=now + timedelta(minutes=backoff_minutes),

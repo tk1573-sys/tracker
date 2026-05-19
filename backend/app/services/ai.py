@@ -31,14 +31,24 @@ class RuleBasedAIProvider(AIProviderAdapter):
                 clarification_message="Please enter a command.",
             )
 
-        reminder_match = re.search(
-            r"remind me\s+(?P<when>.+?)\s+to\s+(?P<title>.+)",
-            normalized,
-            flags=re.IGNORECASE,
-        )
-        if reminder_match:
-            when_text = reminder_match.group("when")
-            title = reminder_match.group("title").strip().rstrip(".")
+        lowered = normalized.lower()
+        if lowered.startswith("remind me "):
+            remainder = normalized[10:].strip()
+            marker = re.search(r"\s+to\s+", remainder, flags=re.IGNORECASE)
+            if marker:
+                when_text = remainder[: marker.start()].strip()
+                title = remainder[marker.end():].strip().rstrip(".")
+            else:
+                when_text = ""
+                title = ""
+
+            if not title:
+                return AIParsedIntent(
+                    intent="create_task_with_reminder",
+                    confidence=0.5,
+                    needs_clarification=True,
+                    clarification_message="Please include what I should remind you about.",
+                )
             remind_at = _parse_time_phrase(when_text, now)
             if remind_at is None:
                 return AIParsedIntent(

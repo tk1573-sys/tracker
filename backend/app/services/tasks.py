@@ -43,7 +43,14 @@ def list_tasks(db: Session, user_id: int, mode_id: int | None, include_all_modes
     return db.scalars(stmt).all()
 
 
-def update_task(db: Session, user_id: int, task_id: int, payload: TaskUpdate) -> Task | None:
+def update_task(
+    db: Session,
+    user_id: int,
+    task_id: int,
+    payload: TaskUpdate,
+    *,
+    auto_commit: bool = True,
+) -> Task | None:
     task = db.scalar(select(Task).where(Task.id == task_id, Task.user_id == user_id))
     if not task:
         return None
