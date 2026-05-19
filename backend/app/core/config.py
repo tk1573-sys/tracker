@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_access_token_expire_minutes: int = Field(default=30, alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
+    reminder_worker_enabled: bool = Field(default=True, alias="REMINDER_WORKER_ENABLED")
+    reminder_worker_interval_seconds: int = Field(default=60, alias="REMINDER_WORKER_INTERVAL_SECONDS")
+
     @model_validator(mode="after")
     def validate_security(self) -> "Settings":
         insecure_defaults = {"change-me", "change-me-in-production", "change-me-in-development-only"}

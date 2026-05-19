@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
 from app.schemas.auth import UserCreate
+from app.services.modes import ensure_default_modes
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
@@ -18,4 +19,5 @@ def create_user(db: Session, payload: UserCreate) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
+    ensure_default_modes(db, user.id)
     return user
