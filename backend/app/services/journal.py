@@ -5,27 +5,28 @@ from sqlalchemy.orm import Session
 
 from app.models.journal_entry import JournalEntry
 from app.schemas.journal import JournalEntryCreate
+from app.services.common import commit_or_rollback, resolve_mode_id, scoped_by_user_mode
 
 
 def create_journal_entry(db: Session, user_id: int, payload: JournalEntryCreate, mode_id: int) -> JournalEntry:
+    resolved_mode_id = resolve_mode_id(db, user_id=user_id, requested_mode_id=payload.mode_id, fallback_mode_id=mode_id)
     entry = JournalEntry(
         user_id=user_id,
-        mode_id=payload.mode_id or mode_id,
+        mode_id=resolved_mode_id,
         entry_date=payload.entry_date or date.today(),
         mood_score=payload.mood_score,
         content=payload.content,
         tags=payload.tags,
     )
     db.add(entry)
-    db.commit()
+    commit_or_rollback(db)
     db.refresh(entry)
     return entry
 
 
 def list_journal_entries(db: Session, user_id: int, mode_id: int | None, include_all_modes: bool) -> list[JournalEntry]:
-    stmt = select(JournalEntry).where(JournalEntry.user_id == user_id).order_by(JournalEntry.entry_date.desc(), JournalEntry.id.desc())
-    if not include_all_modes and mode_id is not None:
-        stmt = stmt.where(JournalEntry.mode_id == mode_id)
+    stmt = select(JournalEntry).order_by(JournalEntry.entry_date.desc(), JournalEntry.id.desc())
+    stmt = scoped_by_user_mode(stmt, JournalEntry, user_id=user_id, mode_id=mode_id, include_all_modes=include_all_modes)
     return db.scalars(stmt).all()
 
 

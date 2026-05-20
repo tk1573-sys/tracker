@@ -28,9 +28,6 @@ def ai_command(
     )
 
     task_read = TaskRead.model_validate(created_task) if created_task else None
-    if task_read:
-        task_read.subtasks = []
-
     reminder_read = ReminderRead.model_validate(created_reminder) if created_reminder else None
 
     if parsed.needs_clarification:

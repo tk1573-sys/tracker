@@ -1,13 +1,13 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.reminder import ReminderRead
 from app.schemas.task import TaskRead
 
 
 class AICommandRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=2000)
     mode_id: int | None = None
 
 

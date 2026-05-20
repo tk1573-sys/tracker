@@ -1,10 +1,11 @@
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class SubtaskCreate(BaseModel):
-    title: str
+    title: str = Field(min_length=1, max_length=255)
     due_at: datetime | None = None
 
 
@@ -19,23 +20,37 @@ class SubtaskRead(BaseModel):
 
 
 class TaskCreate(BaseModel):
-    title: str
-    notes: str | None = None
-    priority: str = "medium"
+    title: str = Field(min_length=1, max_length=255)
+    notes: str | None = Field(default=None, max_length=4000)
+    priority: Literal["low", "medium", "high"] = "medium"
     due_at: datetime | None = None
     mode_id: int | None = None
     category_id: int | None = None
     subtasks: list[SubtaskCreate] = Field(default_factory=list)
 
+    @field_validator("subtasks")
+    @classmethod
+    def ensure_unique_subtasks(cls, subtasks: list[SubtaskCreate]) -> list[SubtaskCreate]:
+        normalized = {item.title.strip().lower() for item in subtasks}
+        if len(normalized) != len(subtasks):
+            raise ValueError("Subtask titles must be unique")
+        return subtasks
+
 
 class TaskUpdate(BaseModel):
-    title: str | None = None
-    notes: str | None = None
-    status: str | None = None
-    priority: str | None = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    notes: str | None = Field(default=None, max_length=4000)
+    status: Literal["pending", "in_progress", "completed"] | None = None
+    priority: Literal["low", "medium", "high"] | None = None
     due_at: datetime | None = None
     mode_id: int | None = None
     category_id: int | None = None
+
+    @model_validator(mode="after")
+    def ensure_non_empty_update(self) -> "TaskUpdate":
+        if not self.model_fields_set:
+            raise ValueError("At least one field must be provided")
+        return self
 
 
 class TaskRead(BaseModel):

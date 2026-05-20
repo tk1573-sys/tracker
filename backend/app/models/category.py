@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey, String, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -13,3 +13,7 @@ class Category(Base):
     mode_id: Mapped[int | None] = mapped_column(ForeignKey("modes.id", ondelete="SET NULL"), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    user: Mapped["User"] = relationship(back_populates="categories")
+    mode: Mapped["Mode | None"] = relationship(back_populates="categories")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="category")
