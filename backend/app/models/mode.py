@@ -21,3 +21,5 @@ class Mode(Base):
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="mode")
     journal_entries: Mapped[list["JournalEntry"]] = relationship(back_populates="mode")
     ai_messages: Mapped[list["AIMessage"]] = relationship(back_populates="mode")
+    goals: Mapped[list["Goal"]] = relationship(back_populates="mode")
+    projects: Mapped[list["Project"]] = relationship(back_populates="mode")

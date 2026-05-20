@@ -29,6 +29,7 @@ class Task(Base):
     reminders: Mapped[list["Reminder"]] = relationship(back_populates="task")
     follow_ups: Mapped[list["FollowUp"]] = relationship(back_populates="task")
     schedules: Mapped[list["Schedule"]] = relationship(back_populates="linked_task")
+    project_links: Mapped[list["ProjectTaskLink"]] = relationship(back_populates="task", cascade="all, delete-orphan")
 
 
 class Subtask(Base):
