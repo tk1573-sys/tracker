@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.common import utcnow
@@ -19,6 +19,11 @@ class Reminder(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
 
+    user: Mapped["User"] = relationship(back_populates="reminders")
+    task: Mapped["Task | None"] = relationship(back_populates="reminders")
+    mode: Mapped["Mode"] = relationship(back_populates="reminders")
+    follow_ups: Mapped[list["FollowUp"]] = relationship(back_populates="reminder")
+
 
 class FollowUpRule(Base):
     __tablename__ = "follow_up_rules"
@@ -31,6 +36,9 @@ class FollowUpRule(Base):
     max_retries: Mapped[int] = mapped_column(nullable=False, default=3)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
+    user: Mapped["User"] = relationship(back_populates="follow_up_rules")
+    mode: Mapped["Mode"] = relationship(back_populates="follow_up_rules")
+
 
 class FollowUp(Base):
     __tablename__ = "follow_ups"
@@ -42,3 +50,6 @@ class FollowUp(Base):
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
     retry_count: Mapped[int] = mapped_column(nullable=False, default=0)
+
+    reminder: Mapped["Reminder | None"] = relationship(back_populates="follow_ups")
+    task: Mapped["Task | None"] = relationship(back_populates="follow_ups")

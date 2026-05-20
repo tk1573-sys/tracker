@@ -21,11 +21,11 @@ def create_access_token(subject: str, expires_delta: timedelta | None = None) ->
         expires_delta or timedelta(minutes=settings.jwt_access_token_expire_minutes)
     )
     payload = {"sub": subject, "exp": expire}
-    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    return jwt.encode(payload, settings.jwt_secret_key.get_secret_value(), algorithm=settings.jwt_algorithm)
 
 
 def decode_token(token: str) -> dict:
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    return jwt.decode(token, settings.jwt_secret_key.get_secret_value(), algorithms=[settings.jwt_algorithm])
 
 
 def get_subject_from_token(token: str) -> str | None:

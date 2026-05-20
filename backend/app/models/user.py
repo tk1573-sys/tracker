@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -19,3 +19,13 @@ class User(Base):
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
     )
+
+    modes: Mapped[list["Mode"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    categories: Mapped[list["Category"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    tasks: Mapped[list["Task"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    reminders: Mapped[list["Reminder"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    follow_up_rules: Mapped[list["FollowUpRule"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    schedules: Mapped[list["Schedule"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    journal_entries: Mapped[list["JournalEntry"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    ai_messages: Mapped[list["AIMessage"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    ai_actions: Mapped[list["AIAction"]] = relationship(back_populates="user", cascade="all, delete-orphan")

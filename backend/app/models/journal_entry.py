@@ -1,7 +1,7 @@
 from datetime import date
 
 from sqlalchemy import Date, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -16,3 +16,6 @@ class JournalEntry(Base):
     mood_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     tags: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    user: Mapped["User"] = relationship(back_populates="journal_entries")
+    mode: Mapped["Mode"] = relationship(back_populates="journal_entries")

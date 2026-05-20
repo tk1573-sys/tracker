@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, Float, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.common import utcnow
@@ -17,6 +17,10 @@ class AIMessage(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
 
+    user: Mapped["User"] = relationship(back_populates="ai_messages")
+    mode: Mapped["Mode | None"] = relationship(back_populates="ai_messages")
+    actions: Mapped[list["AIAction"]] = relationship(back_populates="ai_message", cascade="all, delete-orphan")
+
 
 class AIAction(Base):
     __tablename__ = "ai_actions"
@@ -29,3 +33,6 @@ class AIAction(Base):
     created_entity_refs: Mapped[str | None] = mapped_column(Text, nullable=True)
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
+
+    user: Mapped["User"] = relationship(back_populates="ai_actions")
+    ai_message: Mapped["AIMessage"] = relationship(back_populates="actions")

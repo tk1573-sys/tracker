@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -7,7 +8,7 @@ class ReminderCreate(BaseModel):
     remind_at: datetime
     task_id: int | None = None
     mode_id: int | None = None
-    channel: str = "in_app"
+    channel: Literal["in_app", "email"] = "in_app"
 
 
 class ReminderRead(BaseModel):
