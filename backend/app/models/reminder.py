@@ -50,6 +50,9 @@ class FollowUp(Base):
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
     retry_count: Mapped[int] = mapped_column(nullable=False, default=0)
+    escalation_level: Mapped[int] = mapped_column(nullable=False, default=0)
+    priority: Mapped[str] = mapped_column(String(30), nullable=False, default="medium")
+    reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     reminder: Mapped["Reminder | None"] = relationship(back_populates="follow_ups")
     task: Mapped["Task | None"] = relationship(back_populates="follow_ups")

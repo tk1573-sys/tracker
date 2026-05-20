@@ -9,6 +9,7 @@ from app.schemas.reminder import ReminderCreate
 from app.services.common import commit_or_rollback, ensure_task_access, flush_or_rollback, resolve_mode_id, scoped_by_user_mode
 
 MAX_FOLLOW_UP_DELAY_MINUTES = 48 * 60
+INACTIVITY_THRESHOLD_HOURS = 24
 
 
 def create_default_follow_up_rule(db: Session, user_id: int, mode_id: int, *, auto_commit: bool = True) -> FollowUpRule:
@@ -89,6 +90,7 @@ def process_follow_ups(db: Session, now: datetime | None = None) -> int:
     now = now or datetime.now(UTC)
     created_count = 0
     rule_cache: dict[tuple[int, int], FollowUpRule | None] = {}
+    recovery_reminders_created = 0
 
     overdue_tasks = db.scalars(
         select(Task).where(
@@ -132,22 +134,63 @@ def process_follow_ups(db: Session, now: datetime | None = None) -> int:
         if retry_count >= rule.max_retries:
             continue
 
-        backoff_minutes = min(rule.delay_minutes * (2**retry_count), MAX_FOLLOW_UP_DELAY_MINUTES)
+        overdue_hours = max((now - task.due_at).total_seconds(), 0.0) / 3600.0 if task.due_at else 0.0
+        inactivity_hours = max((now - task.created_at).total_seconds(), 0.0) / 3600.0
+        adaptive_multiplier = 1.0
+        if task.priority == "high":
+            adaptive_multiplier = 0.5
+        elif task.priority == "low":
+            adaptive_multiplier = 1.5
+        if inactivity_hours >= INACTIVITY_THRESHOLD_HOURS:
+            adaptive_multiplier = min(adaptive_multiplier, 0.75)
+
+        backoff_minutes = max(
+            1,
+            int(min((rule.delay_minutes * (2**retry_count)) * adaptive_multiplier, MAX_FOLLOW_UP_DELAY_MINUTES)),
+        )
+        priority = "high" if task.priority == "high" or overdue_hours >= 24 else "medium"
+        escalation_level = min(retry_count + (1 if overdue_hours >= 24 else 0), rule.max_retries)
+        reason = "inactivity" if inactivity_hours >= INACTIVITY_THRESHOLD_HOURS else "overdue"
         follow_up = FollowUp(
             task_id=task.id,
             scheduled_at=now + timedelta(minutes=backoff_minutes),
             status="pending",
             retry_count=retry_count,
+            escalation_level=escalation_level,
+            priority=priority,
+            reason=reason,
         )
         db.add(follow_up)
         created_count += 1
+
+        if overdue_hours >= 24:
+            has_pending_recovery = db.scalar(
+                select(Reminder.id).where(
+                    Reminder.task_id == task.id,
+                    Reminder.status == "pending",
+                    Reminder.remind_at > now,
+                )
+            )
+            if not has_pending_recovery:
+                db.add(
+                    Reminder(
+                        user_id=task.user_id,
+                        task_id=task.id,
+                        mode_id=task.mode_id,
+                        remind_at=now + timedelta(minutes=15),
+                        channel="in_app",
+                        status="pending",
+                    )
+                )
+                recovery_reminders_created += 1
 
     due_followups = db.scalars(select(FollowUp).where(FollowUp.status == "pending", FollowUp.scheduled_at <= now)).all()
     for follow_up in due_followups:
         follow_up.status = "sent"
         follow_up.sent_at = now
         follow_up.retry_count = follow_up.retry_count + 1
+        follow_up.escalation_level = max(follow_up.escalation_level, follow_up.retry_count)
         db.add(follow_up)
-    if created_count or due_followups:
+    if created_count or due_followups or recovery_reminders_created:
         commit_or_rollback(db)
-    return created_count + len(due_followups)
+    return created_count + len(due_followups) + recovery_reminders_created

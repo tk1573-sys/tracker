@@ -2,7 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.schemas.goals import GoalRead, ProjectRead
 from app.schemas.reminder import ReminderRead
+from app.schemas.schedule import ScheduleRead
 from app.schemas.task import TaskRead
 
 
@@ -14,8 +16,11 @@ class AICommandRequest(BaseModel):
 class AIParsedIntent(BaseModel):
     intent: str
     title: str | None = None
+    project_title: str | None = None
     due_at: datetime | None = None
     remind_at: datetime | None = None
+    suggested_mode: str | None = None
+    action_plan: list[str] = Field(default_factory=list)
     confidence: float
     needs_clarification: bool = False
     clarification_message: str | None = None
@@ -25,4 +30,7 @@ class AICommandResponse(BaseModel):
     parsed: AIParsedIntent
     created_task: TaskRead | None = None
     created_reminder: ReminderRead | None = None
+    created_project: ProjectRead | None = None
+    created_goal: GoalRead | None = None
+    created_schedules: list[ScheduleRead] = Field(default_factory=list)
     message: str

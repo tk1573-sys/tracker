@@ -3,10 +3,17 @@ from sqlalchemy.orm import Session
 
 from app.models.schedule import Schedule
 from app.schemas.schedule import ScheduleCreate
-from app.services.common import commit_or_rollback, ensure_task_access, resolve_mode_id, scoped_by_user_mode
+from app.services.common import commit_or_rollback, ensure_task_access, flush_or_rollback, resolve_mode_id, scoped_by_user_mode
 
 
-def create_schedule(db: Session, user_id: int, payload: ScheduleCreate, mode_id: int) -> Schedule:
+def create_schedule(
+    db: Session,
+    user_id: int,
+    payload: ScheduleCreate,
+    mode_id: int,
+    *,
+    auto_commit: bool = True,
+) -> Schedule:
     resolved_mode_id = resolve_mode_id(db, user_id=user_id, requested_mode_id=payload.mode_id, fallback_mode_id=mode_id)
     if payload.linked_task_id is not None:
         ensure_task_access(db, user_id=user_id, task_id=payload.linked_task_id, mode_id=resolved_mode_id)
@@ -19,8 +26,11 @@ def create_schedule(db: Session, user_id: int, payload: ScheduleCreate, mode_id:
         linked_task_id=payload.linked_task_id,
     )
     db.add(schedule)
-    commit_or_rollback(db)
-    db.refresh(schedule)
+    if auto_commit:
+        commit_or_rollback(db)
+        db.refresh(schedule)
+    else:
+        flush_or_rollback(db)
     return schedule
 
 

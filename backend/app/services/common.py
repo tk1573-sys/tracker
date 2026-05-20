@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import NotFoundError, ValidationError
 from app.models.category import Category
+from app.models.execution import Project
 from app.models.mode import Mode
 from app.models.task import Task
 
@@ -67,3 +68,12 @@ def ensure_category_access(db: Session, *, user_id: int, category_id: int, mode_
     if category.mode_id is not None and category.mode_id != mode_id:
         raise ValidationError("Category does not belong to the selected mode", code="category_mode_mismatch")
     return category
+
+
+def ensure_project_access(db: Session, *, user_id: int, project_id: int, mode_id: int | None = None) -> Project:
+    project = db.scalar(select(Project).where(Project.id == project_id, Project.user_id == user_id))
+    if project is None:
+        raise NotFoundError("Project not found", code="project_not_found")
+    if mode_id is not None and project.mode_id != mode_id:
+        raise ValidationError("Project does not belong to the selected mode", code="project_mode_mismatch")
+    return project

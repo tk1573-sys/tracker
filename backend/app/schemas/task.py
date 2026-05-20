@@ -25,6 +25,7 @@ class TaskCreate(BaseModel):
     priority: Literal["low", "medium", "high"] = "medium"
     due_at: datetime | None = None
     mode_id: int | None = None
+    project_id: int | None = None
     category_id: int | None = None
     subtasks: list[SubtaskCreate] = Field(default_factory=list)
 
@@ -44,6 +45,7 @@ class TaskUpdate(BaseModel):
     priority: Literal["low", "medium", "high"] | None = None
     due_at: datetime | None = None
     mode_id: int | None = None
+    project_id: int | None = None
     category_id: int | None = None
 
     @model_validator(mode="after")
@@ -57,6 +59,7 @@ class TaskRead(BaseModel):
     id: int
     user_id: int
     mode_id: int
+    project_id: int | None
     category_id: int | None
     title: str
     notes: str | None
