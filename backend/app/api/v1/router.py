@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import ai, auth, dashboard, health, journal, modes, reminders, schedules, tasks, trackers
+from app.api.v1.endpoints import ai, auth, command_center, dashboard, goals, health, journal, modes, reminders, schedules, tasks, trackers
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
@@ -12,4 +12,6 @@ api_router.include_router(journal.router, prefix="/journal", tags=["journal"])
 api_router.include_router(trackers.router, prefix="/trackers", tags=["trackers"])
 api_router.include_router(schedules.router, prefix="/schedules", tags=["schedules"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+api_router.include_router(goals.router, prefix="/goals", tags=["goals"])
+api_router.include_router(command_center.router, prefix="/command-center", tags=["command-center"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai"])

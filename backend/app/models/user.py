@@ -29,3 +29,5 @@ class User(Base):
     journal_entries: Mapped[list["JournalEntry"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     ai_messages: Mapped[list["AIMessage"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     ai_actions: Mapped[list["AIAction"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    projects: Mapped[list["Project"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    goals: Mapped[list["Goal"]] = relationship(back_populates="user", cascade="all, delete-orphan")

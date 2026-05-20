@@ -48,6 +48,7 @@ class ApiIntegrationTests(unittest.TestCase):
             other_user = create_user(db, UserCreate(email="other@example.com", password="password123"))
             self.token = create_access_token(subject=user.email)
             self.user_work_mode_id = db.scalar(select(Mode.id).where(Mode.user_id == user.id, Mode.name == "work"))
+            self.user_academic_mode_id = db.scalar(select(Mode.id).where(Mode.user_id == user.id, Mode.name == "academic"))
             self.other_work_mode_id = db.scalar(
                 select(Mode.id).where(Mode.user_id == other_user.id, Mode.name == "work")
             )
@@ -89,3 +90,26 @@ class ApiIntegrationTests(unittest.TestCase):
         self.assertEqual(body["parsed"]["intent"], "create_task_with_reminder")
         self.assertEqual(body["created_task"]["mode_id"], self.user_work_mode_id)
         self.assertIsNotNone(body["created_reminder"])
+
+    def test_ai_command_builds_execution_workflow(self) -> None:
+        response = self.client.post(
+            "/api/v1/ai/command",
+            headers=self.headers,
+            json={"message": "help me finish my MTech report this week"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["parsed"]["intent"], "build_execution_workflow")
+        self.assertIsNotNone(body["created_project"])
+        self.assertIsNotNone(body["created_goal"])
+        self.assertEqual(body["created_project"]["mode_id"], self.user_academic_mode_id)
+        self.assertGreaterEqual(len(body["created_schedules"]), 1)
+
+    def test_command_center_today_overview_endpoint(self) -> None:
+        response = self.client.get("/api/v1/command-center/today-overview", headers=self.headers)
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("due_today", body)
+        self.assertIn("completion_score", body)

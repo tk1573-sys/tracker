@@ -1,5 +1,6 @@
 from app.models.ai import AIAction, AIMessage
 from app.models.category import Category
+from app.models.execution import ExecutionPhase, Goal, Milestone, Project
 from app.models.journal_entry import JournalEntry
 from app.models.mode import Mode
 from app.models.reminder import FollowUp, FollowUpRule, Reminder
@@ -16,11 +17,15 @@ __all__ = [
     "FinanceRecord",
     "FollowUp",
     "FollowUpRule",
+    "Goal",
     "Habit",
     "HabitLog",
     "HealthRecord",
+    "ExecutionPhase",
     "JournalEntry",
+    "Milestone",
     "Mode",
+    "Project",
     "Reminder",
     "Schedule",
     "Subtask",

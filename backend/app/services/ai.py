@@ -7,11 +7,16 @@ from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.models.ai import AIAction, AIMessage
+from app.models.execution import Goal, Project
+from app.models.reminder import Reminder
+from app.models.schedule import Schedule
+from app.models.task import Task
 from app.models.user import User
 from app.schemas.ai import AIParsedIntent
 from app.schemas.reminder import ReminderCreate
 from app.schemas.task import TaskCreate
 from app.services.common import commit_or_rollback, flush_or_rollback, resolve_mode_id
+from app.services.goals import build_execution_workflow
 from app.services.reminders import create_reminder
 from app.services.tasks import create_task
 
@@ -36,6 +41,12 @@ TASK_PREFIXES = (
     "add task to ",
     "add task ",
 )
+WORKFLOW_PREFIXES = (
+    "help me finish ",
+    "plan execution for ",
+    "build workflow for ",
+)
+ACADEMIC_HINTS = ("mtech", "thesis", "report", "assignment", "exam", "study", "academic")
 
 
 class AIProviderAdapter:
@@ -102,12 +113,53 @@ class RuleBasedAIProvider(AIProviderAdapter):
                     confidence=0.8,
                 )
 
+        for prefix in WORKFLOW_PREFIXES:
+            if lowered.startswith(prefix):
+                project_text = normalized[len(prefix) :].strip().rstrip(".")
+                if not project_text:
+                    return AIParsedIntent(
+                        intent="build_execution_workflow",
+                        confidence=0.5,
+                        needs_clarification=True,
+                        clarification_message="Please specify what project you want to complete.",
+                    )
+                due_at = None
+                project_title = project_text
+                if project_text.lower().endswith(" this week"):
+                    project_title = project_text[:-10].strip()
+                    due_at = _end_of_week(now)
+                elif project_text.lower().endswith(" today"):
+                    project_title = project_text[:-6].strip()
+                    due_at = now.replace(hour=22, minute=0, second=0, microsecond=0)
+                suggested_mode = "academic" if any(token in project_title.lower() for token in ACADEMIC_HINTS) else None
+                return AIParsedIntent(
+                    intent="build_execution_workflow",
+                    project_title=project_title,
+                    title=f"Complete {project_title}",
+                    due_at=due_at,
+                    suggested_mode=suggested_mode,
+                    action_plan=[
+                        "create_project",
+                        "create_milestones",
+                        "create_subtasks",
+                        "create_reminder_cadence",
+                        "create_focus_blocks",
+                    ],
+                    confidence=0.9 if due_at else 0.78,
+                )
+
         return AIParsedIntent(
             intent="unknown",
             confidence=0.4,
             needs_clarification=True,
-            clarification_message="I can help create tasks and reminders. Please use 'remind me ... to ...'.",
+            clarification_message="I can create tasks, reminders, and execution workflows. Try 'help me finish ... this week'.",
         )
+
+
+def _end_of_week(now: datetime) -> datetime:
+    days_until_sunday = (6 - now.weekday()) % 7
+    target = now + timedelta(days=days_until_sunday)
+    return target.replace(hour=21, minute=0, second=0, microsecond=0)
 
 
 def _apply_time(hour: int, minute: int, suffix: str | None) -> tuple[int, int]:
@@ -166,7 +218,7 @@ def execute_ai_command(
     mode_id: int,
     message: str,
     provider: AIProviderAdapter | None = None,
-) -> tuple[AIParsedIntent, object | None, object | None]:
+) -> tuple[AIParsedIntent, Task | None, Reminder | None, Project | None, Goal | None, list[Schedule]]:
     now = datetime.now(UTC)
     parser = provider or RuleBasedAIProvider()
     parsed = parser.parse(message, now)
@@ -178,8 +230,38 @@ def execute_ai_command(
 
     created_task = None
     created_reminder = None
+    created_project = None
+    created_goal = None
+    created_schedules: list[Schedule] = []
 
     try:
+        safe_intents = {"create_task", "create_task_with_reminder", "build_execution_workflow", "unknown"}
+        if parsed.intent not in safe_intents:
+            parsed.needs_clarification = True
+            parsed.clarification_message = "I could not safely execute that command. Please clarify."
+
+        if parsed.confidence < 0.55 and not parsed.needs_clarification:
+            parsed.needs_clarification = True
+            parsed.clarification_message = "I am not confident enough to execute this. Please clarify your request."
+
+        if not parsed.needs_clarification and parsed.intent == "build_execution_workflow":
+            if not parsed.project_title:
+                parsed.needs_clarification = True
+                parsed.clarification_message = "Please specify the project title for the execution workflow."
+            else:
+                created_project, created_goal, linked_task_id, reminder_ids, schedule_ids = build_execution_workflow(
+                    db,
+                    user_id=user.id,
+                    mode_id=resolved_mode_id,
+                    project_title=parsed.project_title,
+                    deadline=parsed.due_at,
+                    suggested_mode_name=parsed.suggested_mode,
+                    auto_commit=False,
+                )
+                created_task = db.get(Task, linked_task_id) if linked_task_id else None
+                created_reminder = db.get(Reminder, reminder_ids[0]) if reminder_ids else None
+                created_schedules = [db.get(Schedule, schedule_id) for schedule_id in schedule_ids]
+
         if not parsed.needs_clarification and parsed.intent in {"create_task", "create_task_with_reminder"} and parsed.title:
             created_task = create_task(
                 db,
@@ -206,6 +288,9 @@ def execute_ai_command(
                 {
                     "task_id": getattr(created_task, "id", None),
                     "reminder_id": getattr(created_reminder, "id", None),
+                    "project_id": getattr(created_project, "id", None),
+                    "goal_id": getattr(created_goal, "id", None),
+                    "schedule_ids": [getattr(schedule, "id", None) for schedule in created_schedules if schedule is not None],
                 }
             ),
             confidence=parsed.confidence,
@@ -224,6 +309,11 @@ def execute_ai_command(
         db.refresh(created_task)
     if created_reminder is not None:
         db.refresh(created_reminder)
+    if created_project is not None:
+        db.refresh(created_project)
+    if created_goal is not None:
+        db.refresh(created_goal)
+    created_schedules = [schedule for schedule in created_schedules if schedule is not None]
 
     logger.info(
         "ai_command_processed",
@@ -233,6 +323,7 @@ def execute_ai_command(
             "mode_id": resolved_mode_id,
             "intent": parsed.intent,
             "needs_clarification": parsed.needs_clarification,
+            "project_created": created_project is not None,
         },
     )
-    return parsed, created_task, created_reminder
+    return parsed, created_task, created_reminder, created_project, created_goal, created_schedules

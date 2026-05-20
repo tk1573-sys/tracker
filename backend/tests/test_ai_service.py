@@ -23,3 +23,12 @@ class RuleBasedAIProviderTests(unittest.TestCase):
         self.assertTrue(parsed.needs_clarification)
         self.assertEqual(parsed.intent, "create_task_with_reminder")
         self.assertIsNone(parsed.remind_at)
+
+    def test_parses_execution_workflow_command(self) -> None:
+        parsed = self.provider.parse("help me finish my MTech report this week", self.now)
+
+        self.assertEqual(parsed.intent, "build_execution_workflow")
+        self.assertFalse(parsed.needs_clarification)
+        self.assertEqual(parsed.project_title, "my MTech report")
+        self.assertEqual(parsed.suggested_mode, "academic")
+        self.assertGreater(parsed.confidence, 0.8)

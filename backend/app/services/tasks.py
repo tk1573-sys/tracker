@@ -8,12 +8,13 @@ from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.common import (
     commit_or_rollback,
     ensure_category_access,
+    ensure_project_access,
     flush_or_rollback,
     resolve_mode_id,
     scoped_by_user_mode,
 )
 
-UPDATABLE_TASK_FIELDS = {"title", "notes", "status", "priority", "due_at", "mode_id", "category_id"}
+UPDATABLE_TASK_FIELDS = {"title", "notes", "status", "priority", "due_at", "mode_id", "project_id", "category_id"}
 
 
 def create_task(
@@ -27,10 +28,13 @@ def create_task(
     resolved_mode_id = resolve_mode_id(db, user_id=user_id, requested_mode_id=payload.mode_id, fallback_mode_id=mode_id)
     if payload.category_id is not None:
         ensure_category_access(db, user_id=user_id, category_id=payload.category_id, mode_id=resolved_mode_id)
+    if payload.project_id is not None:
+        ensure_project_access(db, user_id=user_id, project_id=payload.project_id, mode_id=resolved_mode_id)
 
     task = Task(
         user_id=user_id,
         mode_id=resolved_mode_id,
+        project_id=payload.project_id,
         category_id=payload.category_id,
         title=payload.title,
         notes=payload.notes,
@@ -78,7 +82,10 @@ def update_task(
             fallback_mode_id=task.mode_id,
         )
     effective_mode_id = data.get("mode_id", task.mode_id)
+    effective_project_id = data["project_id"] if "project_id" in data else task.project_id
     effective_category_id = data["category_id"] if "category_id" in data else task.category_id
+    if effective_project_id is not None:
+        ensure_project_access(db, user_id=user_id, project_id=effective_project_id, mode_id=effective_mode_id)
     if effective_category_id is not None:
         ensure_category_access(db, user_id=user_id, category_id=effective_category_id, mode_id=effective_mode_id)
     for key, value in data.items():

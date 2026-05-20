@@ -13,6 +13,7 @@ class Task(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     mode_id: Mapped[int] = mapped_column(ForeignKey("modes.id", ondelete="RESTRICT"), nullable=False, index=True)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, index=True)
     category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -24,6 +25,7 @@ class Task(Base):
 
     user: Mapped["User"] = relationship(back_populates="tasks")
     mode: Mapped["Mode"] = relationship(back_populates="tasks")
+    project: Mapped["Project | None"] = relationship(back_populates="tasks")
     category: Mapped["Category | None"] = relationship(back_populates="tasks")
     subtasks: Mapped[list["Subtask"]] = relationship(back_populates="task", cascade="all, delete-orphan")
     reminders: Mapped[list["Reminder"]] = relationship(back_populates="task")
