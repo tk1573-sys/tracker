@@ -17,8 +17,6 @@ from app.services.tasks import create_task
 
 logger = get_logger(__name__)
 
-REMINDER_COMMAND_PATTERN = re.compile(r"^remind me\s+(?P<when>.+?)\s+to\s+(?P<title>.+)$", re.IGNORECASE)
-TASK_COMMAND_PATTERN = re.compile(r"^(?:create|add)(?:\s+a)?\s+task(?:\s+to)?\s+(?P<title>.+)$", re.IGNORECASE)
 RELATIVE_TIME_PATTERN = re.compile(r"^in\s+(?P<amount>\d+)\s+(?P<unit>minute|minutes|hour|hours)$", re.IGNORECASE)
 DAY_TIME_PATTERN = re.compile(
     r"^(?P<day>today|tomorrow)(?:\s+at\s+(?P<hour>\d{1,2})(?::(?P<minute>\d{2}))?\s*(?P<suffix>am|pm)?)?$",
@@ -27,6 +25,16 @@ DAY_TIME_PATTERN = re.compile(
 DATE_TIME_PATTERN = re.compile(
     r"^(?P<date>\d{4}-\d{2}-\d{2})(?:\s+at\s+(?P<hour>\d{1,2})(?::(?P<minute>\d{2}))?\s*(?P<suffix>am|pm)?)?$",
     re.IGNORECASE,
+)
+TASK_PREFIXES = (
+    "create a task to ",
+    "create a task ",
+    "create task to ",
+    "create task ",
+    "add a task to ",
+    "add a task ",
+    "add task to ",
+    "add task ",
 )
 
 
@@ -47,10 +55,13 @@ class RuleBasedAIProvider(AIProviderAdapter):
                 clarification_message="Please enter a command.",
             )
 
-        remind_match = REMINDER_COMMAND_PATTERN.search(normalized)
-        if remind_match:
-            when_text = remind_match.group("when").strip()
-            title = remind_match.group("title").strip().rstrip(".")
+        lowered = normalized.lower()
+        if lowered.startswith("remind me "):
+            remainder = normalized[len("remind me ") :].strip()
+            separator = " to "
+            separator_index = remainder.lower().find(separator)
+            when_text = remainder[:separator_index].strip() if separator_index >= 0 else ""
+            title = remainder[separator_index + len(separator) :].strip().rstrip(".") if separator_index >= 0 else ""
             if not title:
                 return AIParsedIntent(
                     intent="create_task_with_reminder",
@@ -75,13 +86,21 @@ class RuleBasedAIProvider(AIProviderAdapter):
                 confidence=0.9,
             )
 
-        task_match = TASK_COMMAND_PATTERN.search(normalized)
-        if task_match:
-            return AIParsedIntent(
-                intent="create_task",
-                title=task_match.group("title").strip().rstrip("."),
-                confidence=0.8,
-            )
+        for prefix in TASK_PREFIXES:
+            if lowered.startswith(prefix):
+                title = normalized[len(prefix) :].strip().rstrip(".")
+                if not title:
+                    return AIParsedIntent(
+                        intent="create_task",
+                        confidence=0.5,
+                        needs_clarification=True,
+                        clarification_message="Please include the task title.",
+                    )
+                return AIParsedIntent(
+                    intent="create_task",
+                    title=title,
+                    confidence=0.8,
+                )
 
         return AIParsedIntent(
             intent="unknown",
